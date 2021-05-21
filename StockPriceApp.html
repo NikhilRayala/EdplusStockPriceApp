@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src="http://code.jquery.com/jquery-latest.js"></script>
+	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<title>Stock Price</title>
+</head>
+    <body>
+        <form onsubmit="return false">
+            <input type="text" id="stockId" name="stockId" placeholder="Stock Symbol"></input>
+            <input type="button" value="Add" onclick="addingStock()"></input>
+        </form>
+        <div>
+            <div id="StockList"></div>
+            <div id="BarChart"></div>
+        </div>
+<script>
+google.charts.load('current', {packages: ['corechart']});
+
+var stocks=[];
+var stockObject = {};
+var stocksList = "";
+
+function addingStock(){
+    var stockSym = document.getElementById('stockId').value;
+    console.log(stockSym);
+    if (!stocks.includes(stockSym)){
+        stocks.push(stockSym);
+        stocksList += "<li>"+stockSym+"</li>";
+    }
+    document.getElementById("StockList").innerHTML = stocksList;
+    console.log(stockObject);
+    getStockData(stockSym); 
+}
+
+function getEachStockData(stockSym){
+    var httpreq = new XMLHttpRequest();
+    var url = "https://cloud.iexapis.com/stable/stock/"+stockSym+"/quote?token=pk_737ab3af607748a7bf70117281b71fe7";
+    httpreq.onreadystatechange = function (){
+        if(this.readyState==4 && this.status==200){
+            var stockData = JSON.parse(this.responseText);
+            stockObject[stockSym] = stockData.latestPrice;
+            console.log(stockData,stockSym);
+        }
+        if(httpreq.status==400){
+            console.log("URL/Data Not Found");
+        }
+    };
+    httpreq.open('GET',url, true);
+    httpreq.send();
+    setTimeout(function(){ 
+        console.log(stockObject);
+        drawChart(); }, 300);
+    console.log("Ended");
+}
+
+function getStockData(stockSym){
+    getEachStockData(stockSym);
+    setInterval(function (){
+        console.log("Called again");
+        for (var i=0;i<stocks.length;i++){
+            getEachStockData(stocks[i]);
+        }
+    },5000);
+}
+
+function drawChart() {
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Stock');
+    data.addColumn('number', 'Stock Price');
+    stockPriceArr = []
+    console.log(stockObject);
+    for(var stock in stockObject){
+        s1 = [stock,stockObject[stock]];
+        stockPriceArr.push(s1);
+    }
+    console.log(stockPriceArr);
+    data.addRows(stockPriceArr);
+    var chart = new google.visualization.BarChart(document.getElementById('BarChart'));
+    chart.draw(data, null);
+    }
+
+</script>
+
+    </body>
+</html>

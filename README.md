@@ -1,1 +1,2 @@
 # StockPriceApp
+# EdplusStockPriceApp
